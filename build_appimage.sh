@@ -164,3 +164,5 @@ docker run --rm -v "${PWD}:/src" -v "${HOME}:/out" \
     -o /src/ffsubsync-x86_64.AppImage
 
 echo "✅  AppImage built: /src/ffsubsync-x86_64.AppImage"
+
+chmod +x build_appimage.sh   # make it executable
