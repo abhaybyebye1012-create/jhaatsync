@@ -1,0 +1,51 @@
+# -----------------------------------------------------------------
+# Build container – mimics an old Debian (stretch) to guarantee that
+# any binary we produce will work on even older Debian releases.
+# -----------------------------------------------------------------
+FROM debian:stretch-slim AS base
+
+# ----- basic tools ----------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    git \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# ----- X11 / Qt runtime libraries (needed for the Qt plugins) -----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libgl1-mesa-glx \
+    libglu1-mesa \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxkbcommon-x11-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# ----- Python ---------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# ----- ffmpeg static‑build dependencies (if you compile ffmpeg) -----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nasm yasm \
+    libx264-dev libx265-dev libvpx-dev libfdk-aac-dev libmp3lame-dev \
+    libopus-dev libass-dev libfreetype6-dev libnuma-dev \
+    libavcodec-dev libavformat-dev libavutil-dev libavdevice-dev \
+    libavfilter-dev libavresample-dev libswscale-dev libswresample-dev \
+    libpostproc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ----- working directory ------------------------------------------------
+WORKDIR /src
