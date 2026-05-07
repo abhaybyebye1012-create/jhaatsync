@@ -1,0 +1,74 @@
+name: Build ffsync AppImage
+
+# Run on every tag that looks like a version (e.g. v0.4.2) and on manual dispatch
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    # --------------------------------------------------------------
+    # 1️⃣  Build inside a Docker container that mirrors an old glibc
+    # --------------------------------------------------------------
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for tags
+
+      - name: Set up Docker Buildx (allows DinD)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR (for caching optional)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image (old glibc)
+        run: |
+          docker build -t build-ffsync - < Dockerfile.build .
+
+      - name: Run the full build script inside the container
+        # The script writes the final AppImage to the repo root.
+        run: |
+          docker run --rm \
+            -v "${PWD}:/src" \
+            -w /src \
+            build-ffsync \
+            ./build_appimage.sh
+
+      # --------------------------------------------------------------
+      # 2️⃣  (Optional) Cache the static ffmpeg & runtime binaries
+      # --------------------------------------------------------------
+      - name: Cache static ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ffmpeg-static-linux64.tar.xz
+          key: ffmpeg-static-${{ runner.os }}-$${{ github.sha }}
+
+      - name: Cache AppImage runtime
+        uses: actions/cache@v4
+        with:
+          path: |
+            appimage-runtime.AppImage
+          key: appimage-runtime-${{ runner.os }}-$${{ github.sha }}
+
+      # --------------------------------------------------------------
+      # 3️⃣  Create a GitHub Release (only on tag pushes)
+      # --------------------------------------------------------------
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AppImage for ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ffsubsync-x86_64.AppImage
+          fail_on_unmatched_files: true
