@@ -1,0 +1,16 @@
+# --------------------------------------------------------------
+# appimage-builder configuration – tells the builder what to do,
+# which runtime to embed, etc.
+# --------------------------------------------------------------
+version: "2"
+
+script:
+  # The AppDir has already been populated by `build_appimage.sh`.
+  # We just keep the default "nothing" command here.
+  - true
+
+app:
+  appdir: /src/AppDir
+  runtime: true                    # embed the runtime AppImage we downloaded
+  identifier: com.smacke.ffsubsync # optional – sets the .AppImage name prefix
+  output: ffsubsync-x86_64.AppImage
